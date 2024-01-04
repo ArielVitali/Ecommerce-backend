@@ -1,0 +1,199 @@
+paths:
+  /api/products:
+    get:
+      tags:
+        - Products
+      summary: Get all products
+      description: Show all available products 
+      responses:
+        "200":
+          description: All products were delivered
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#components/schemas/Product' 
+        "400":
+          description: Bad request
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden, user not authorized
+        "500":
+          description: Server error
+    post:
+      tags:
+       - Products
+      summary: Post a new product
+      description: Post a product that you want to sell
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#components/requestBodies/Product"
+  /api/products/{pid}:
+    get:
+      tags:
+        - Products
+      summary: Get a product by its id
+      description: Show just a product found out by its id
+      parameters:
+      - name: pid
+        in: path
+        required: true
+        description: Product id to find it
+        schema:
+          $type: String
+      responses:
+        "200":
+          description: The product was delivered
+          content:
+            application/json:
+              schema:
+                $ref: "#components/schemas/Product"
+        "400":
+          description: Bad request
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden, user not authorized
+        "500":
+          description: Server error
+    put:
+      tags:
+        - Products
+      summary: Upgrade a product by its id
+      description: Update a product with its id
+      parameters:
+      - name: pid
+        in: path
+        required: true
+        description: Product id to find and update it
+        schema:
+          $type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#components/requestBodies/Product"
+      responses:
+        "200":
+          description: The product was updated
+        "400":
+          description: Bad request
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden, user not authorized
+        "500":
+          description: Server error
+    delete:
+      tags:
+        - Products
+      summary: Delete a product by its id
+      description: Delete a product with its id
+      parameters:
+      - name: pid
+        in: path
+        required: true
+        description: Product id to find and delete it
+        schema:
+          $type: string
+      responses:
+        "200":
+          description: The product was deleted
+        "400":
+          description: Bad request
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden, user not authorized
+        "500":
+          description: Server error
+  /api/products/mockingproducts:
+    get:
+      tags:
+        - Products
+      summary: Generates a template with 100 elements
+      description: Show all generates elements 
+      responses:
+        "200":
+          description: All generates elements
+        "400":
+          description: Bad request
+        "401":
+          description: Not authenticated
+        "403":
+          description: Forbidden, user not authorized
+        "500":
+          description: Server error
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        _id:
+          type: ObjectId
+          example: 63ed6ef62c4930c20f2e046e
+        title:
+          type: string
+          example: Trustmaster t150
+        description:
+          type: string
+          example: Gaming Steering Wheel
+        price:
+          type: integer
+          example: 1000
+        thumbail:
+          type: string
+          example: ["url prueba"]
+        code:
+          type: integer
+          example: A-0010-Z
+        stock:
+          type: integer
+          example: 1
+        status:
+          type: string
+          enum:
+            - true
+            - false
+          example: true
+        category:
+          type: string
+          example: PS
+        owner:
+          type: string
+          example: example@example.com
+  requestBodies:
+    Product:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Titulo prueba
+        description:
+          type: string
+          example: Descripcion prueba
+        price:
+          type: number
+          example: 500
+        thumbail:
+          type: string
+          example: ["url prueba"]
+        code:
+          type: number
+          example: A-prueba-Z
+        stock:
+          type: number
+          example: 999
+        status:
+          type: boolean 
+          example: true
+        category:
+          type: string
+          example: Categoria prueba
