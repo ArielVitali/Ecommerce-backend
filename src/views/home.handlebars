@@ -1,8 +1,8 @@
 <h1>Lista de productos</h1>
 
- {{#each data}}
-    <div class="user-info">
-      <span id="userInfo">
+{{#each data}}
+  <div class="user-info">
+    <span id="userInfo">
       <h2>{{this.title}}</h2>
       <p>description: {{this.description}}</p>
       <p>price: {{this.price}}</p>
@@ -12,6 +12,6 @@
       <p>status: {{this.status}}</p>
       <p>category: {{this.category}}</p>
       <p>id: {{this.id}}</p>
-      </span>
-    </div>
-  {{/each}}
+    </span>
+  </div>
+{{/each}}

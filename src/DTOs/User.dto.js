@@ -1,5 +1,3 @@
-//const newCart = await cartManager.addCart();
-
 const { cryptPassword } = require("../utils/cryptPassword");
 
 class UserDTO {
@@ -12,7 +10,7 @@ class UserDTO {
     this.age = user.age;
     this.password = cryptPassword(user.password);
     this.cart = user.cart;
-    this.role = "USER";
+    this.role = user.role;
   }
 }
 

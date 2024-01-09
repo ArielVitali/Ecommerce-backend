@@ -10,10 +10,19 @@ class MongoCartManager {
     }
   }
 
+  async findUserID(id) {
+    try {
+      const response = await Cart.findOne({ owner: id });
+      return response;
+    } catch (error) {
+      return error;
+    }
+  }
+
   async addCart(cart) {
     try {
       const addMongoCart = await Cart.create(cart);
-      return "Cart added successfully";
+      return addMongoCart;
     } catch (error) {
       return error;
     }

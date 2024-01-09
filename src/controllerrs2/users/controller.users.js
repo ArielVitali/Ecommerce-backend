@@ -1,5 +1,7 @@
-const passport = require('passport');
-const { UserManager } = require('../../dao/mongoClassManagers/userClass/userMongoManager');
+const passport = require("passport");
+const {
+  UserManager,
+} = require("../../dao/mongoClassManagers/userClass/userMongoManager");
 const userBD = new UserManager();
 const Route = require("../../router/Class.Router");
 
@@ -8,87 +10,137 @@ const uploader = require("../../utils/multer.utils");
 
 class UsersRouter extends Route {
   init() {
-    this.post('/', ['PUBLIC'], passport.authenticate('register', { failureRedirect: '/user/failRegister' }), async (req, res) => {
-      try {
-        req.logger.info("Nuevo usuario registrado")
-        res.send({ message: 'Usuario registrado' });
-      } catch (error) {
-        if (error.code === 11000) return res.status(400).json({ error: 'El usuario ya existe' })
-        res.status(500).json({ error: 'Internal server error' })
+    this.post(
+      "/",
+      ["PUBLIC"],
+      passport.authenticate("register", {
+        failureRedirect: "/api/users/failRegister",
+      }),
+      async (req, res) => {
+        try {
+          req.logger.info("Nuevo usuario registrado");
+          res.send({ message: "Usuario registrado" });
+        } catch (error) {
+          if (error.code === 11000)
+            return res.status(400).json({ error: "El usuario ya existe" });
+          res.status(500).json({ error: "Internal server error" });
+        }
       }
-    })
+    );
 
-    this.get('/failRegister', ['PUBLIC'], (req, res) => {
-      res.send({ error: 'Falló el registro' });
-    })
+    this.get("/", ["PUBLIC"], async (req, res) => {
+      try {
+        const users = await userBD.findAll();
+        res.json(users);
+      } catch (error) {
+        return res.sendServerError(`something went wrong ${error}`);
+      }
+    });
 
-    this.get('/premium/:email', ['PUBLIC'], async (req, res) => {
+    this.delete("/", ["PREMIUM", "ADMIN"], async (req, res) => {
+      try {
+        const users = await userBD.findAll();
+
+        const filterDate = new Date();
+        filterDate.setMinutes(filterDate.getMinutes() - 1);
+
+        const usersToDelete = users.filter(
+          (user) => new Date(user.last_connection) < filterDate
+        );
+
+        if (usersToDelete.length !== 0) {
+          usersToDelete.forEach(async (user) => {
+            await userBD.delete(user.email);
+            const mensaje = {
+              message: `<div> <h1>Hola!</h1> <h2>Su cuenta se elimino por inactividad</h2> </div>`,
+              subject: "Cuenta eliminada de MexaRacing",
+            };
+            SendMail.inactiveUser(user.email, mensaje);
+          });
+          return res.sendSuccess("Los usuarios inactivos fueron borrados");
+        }
+
+        return res.sendSuccess("No hay usuarios inactivos");
+      } catch (error) {
+        return res.sendServerError(`something went wrong ${error}`);
+      }
+    });
+
+    this.get("/failRegister", ["PUBLIC"], (req, res) => {
+      res.send({ error: "Falló el registro" });
+    });
+
+    this.get("/premium/:email", ["PUBLIC"], async (req, res) => {
       try {
         const email = req.params.email;
         const user = await userBD.findUser(email);
-        console.log(user.role)
-        if (user.role == 'USER') {
-          await userBD.updateRole(email, 'PREMIUM');
-          res.send({ message: 'Usuario actualizado' });
+        if (user.role == "USER") {
+          await userBD.updateRole(email, "PREMIUM");
+          res.send({ message: "Usuario actualizado" });
+        } else if (user.role == "PREMIUM") {
+          await userBD.updateRole(email, "USER");
+          res.send({ message: "Usuario actualizado" });
+        } else {
+          res.send({ message: "Usuario No actualizado" });
         }
-        else if (user.role == 'PREMIUM') {
-          await userBD.updateRole(email, 'USER');
-          res.send({ message: 'Usuario actualizado' });
-        }
-        else {
-          res.send({ message: 'Usuario No actualizado' });
-        }
+      } catch (error) {
+        return res.sendServerError(`something went wrong ${error}`);
       }
-      catch (error) {
-        res.sendServerError(`something went wrong ${error}`)
-      }
-    })
+    });
 
-    this.put("/premium", ["USER", "PREMIUM"], async (req, res) => {
+    this.put("/premium", ["ADMIN"], async (req, res) => {
       try {
-
-        const currentUser = req.user;
-        const currentRole = currentUser.role;
-
-        if (currentRole === "USER") {
-
-          const path = `${process.cwd()}/src/files/documents/${currentUser.email}`
-
-          if (!fs.existsSync(path)) {
-            return res.sendUserError("No has completado la documentación")
-          }
-        }
+        const id = req.body.id;
+        const user = await userBD.findByID(id);
+        const email = user.email;
+        const role = user.role;
 
         const rolesChanger = {
           USER: "PREMIUM",
-          PREMIUM: "USER"
-        }
+          PREMIUM: "USER",
+        };
 
-        const newRole = rolesChanger[currentRole];
-
-        const response = await userBD.updateRole(currentUser.email, newRole);
-
-
+        const newRole = rolesChanger[role];
+        const response = await userBD.updateRole(email, newRole);
+        res.sendSuccess(response);
       } catch (error) {
-        req.logger.error(error)
-        res.sendServerError(error)
+        return res.sendServerError(`something went wrong ${error}`);
       }
-    })
+    });
 
-    this.post("/documents", ["USER", "ADMIN", "PREMIUM"], uploader.any(), async (req, res) => {
+    this.delete("/deleteOne", ["ADMIN"], async (req, res) => {
       try {
-        const currentUser = req.user;
+        const { id } = req.body;
 
-        if (currentUser.role === "PREMIUM") {
-          return res.sendSuccess("Ya eres Premium")
-        }
-        const files = req.files;
+        await userBD.delete(id);
 
-        res.sendSuccess(`Tus archivos ${files[0].filename} se cargaron correctamente`)
+        res.sendSuccess(`El usuario ${id} fue eliminado con éxito`);
       } catch (error) {
-        throw new Error(error)
+        return res.sendServerError(`something went wrong ${error}`);
       }
-    })
+    });
+
+    this.post(
+      "/documents",
+      ["USER", "ADMIN", "PREMIUM"],
+      uploader.any(),
+      async (req, res) => {
+        try {
+          const currentUser = req.user;
+
+          if (currentUser.role === "PREMIUM") {
+            return res.sendSuccess("Ya eres Premium");
+          }
+          const files = req.files;
+
+          res.sendSuccess(
+            `Tus archivos ${files[0].filename} se cargaron correctamente`
+          );
+        } catch (error) {
+          return res.sendServerError(`something went wrong ${error}`);
+        }
+      }
+    );
   }
 }
 

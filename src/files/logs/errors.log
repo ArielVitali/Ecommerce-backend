@@ -1,2 +1,3 @@
 fatal: logger fatal
 error: logger error
+error: Usuario ya existente

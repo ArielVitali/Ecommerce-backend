@@ -2,10 +2,9 @@ require("dotenv").config();
 const passport = require("passport");
 const local = require("passport-local");
 const GitHubStrategy = require("passport-github2");
-//const GoogleStrategy = require('passport-google-oauth20');
+const GoogleStrategy = require("passport-google-oauth20");
 const jwt = require("passport-jwt");
 const { clientID_github, clientSecret_github } = require("./githubAuth.config");
-//const { clientID_google, clientSecret_google } = require('./googleAuth.config');
 const {
   UserManager,
 } = require("../dao/mongoClassManagers/userClass/userMongoManager");
@@ -30,7 +29,7 @@ const initializePassport = () => {
         try {
           return done(null, jwt_playload);
         } catch (error) {
-          return done(error);
+          return console.error(`something went wrong ${error}`);
         }
       }
     )
@@ -53,6 +52,8 @@ const initializePassport = () => {
             req.logger.error("Usuario ya existente");
             return done(null, false);
           }
+          const fechaActual = new Date();
+          const fechaFormateada = fechaActual.toISOString();
 
           const newUserInfo = {
             first_name,
@@ -61,19 +62,20 @@ const initializePassport = () => {
             age,
             role: "USER",
             password: createHash(password),
+            last_connection: fechaFormateada,
           };
 
           const newUser = await userManager.createUser(newUserInfo);
           return done(null, newUser);
         } catch (error) {
-          return done(error);
+          return req.logger.error(`something went wrong ${error}`);
         }
       }
     )
   );
 
   passport.serializeUser((user, done) => {
-    done(null, user.id);
+    done(null, user._id); // Assuming user has an _id property
   });
 
   passport.deserializeUser(async (id, done) => {
@@ -88,7 +90,6 @@ const initializePassport = () => {
       async (username, password, done) => {
         try {
           const user = await userManager.findUser(username);
-
           if (!user) {
             return done(null, false);
           }
@@ -97,7 +98,7 @@ const initializePassport = () => {
 
           return done(null, user);
         } catch (error) {
-          return done(error);
+          return req.logger.error(`something went wrong ${error}`);
         }
       }
     )
@@ -109,19 +110,20 @@ const initializePassport = () => {
       {
         clientID: clientID_github,
         clientSecret: clientSecret_github,
-        callbackURL: "http://localhost:8081/api/auth/githubcallback",
+        callbackURL: "http://localhost:8080/api/auth/githubcallback",
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
           const user = await userManager.findUser(profile._json.email);
           if (!user) {
+            console.log(profile);
             const newUserInfo = {
               first_name: profile._json.name,
               last_name: "",
               email: profile._json.email,
               age: "",
               role: "USER",
-              password: " ",
+              password: "",
             };
 
             const newUser = await userManager.createUser(newUserInfo);
@@ -130,49 +132,12 @@ const initializePassport = () => {
           }
           done(null, user);
         } catch (error) {
+          console.error(`something went wrong ${error}`);
           done(error);
         }
       }
     )
   );
-
-  /*
-  passport.use(
-    'google',
-    new GoogleStrategy(
-      {
-        clientID: clientID_google,
-        clientSecret: clientSecret_google,
-        callbackURL: 'http://localhost:8081/api/auth/google/callback',
-      },
-      async (accessToken, refreshToken, profile, done) => {
-        try {
-          const user = await userManager.findUser(profile._json.sub);
-
-          if (!user) {
-            const newUserInfo = {
-              //googleId: profile._json.sub,
-              first_name: profile._json.given_name,
-              last_name: profile._json.family_name,
-              email: profile._json.email,
-              age: '',
-              role: 'USER',
-              password: '',
-            };
-
-            const newUser = await userManager.createUser(newUserInfo);
-
-            return done(null, newUser);
-          }
-
-          done(null, user);
-        } catch (error) {
-          done(error);
-        }
-      }
-    )
-  );
-  */
 };
 
 module.exports = initializePassport;

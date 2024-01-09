@@ -1,0 +1,28 @@
+<div>
+  <div>
+    <h1>¡Bienvenido Amin!</h1>
+    <p>Aquí puedes administrar los usuarios.</p>
+  </div>
+  <div>
+    {{#if usersInfo}}
+      {{#each usersInfo}}
+        <div class="contenedorUsuarios">
+          <ul>
+            <li>_id: {{this._id}}</li>
+            <li>Name: {{this.first_name}} {{this.last_name}}</li>
+            <li>Email: {{this.email}}</li>
+            <li>Age: {{this.age}}</li>
+            <li>Role: {{this.role}}</li>
+            <li>Last connection: {{this.last_connection}}</li>
+          </ul>
+          <button class="changeRole" value={{this._id}}>Change role</button>
+          <button class="deleteUser" value={{this._id}}>Delete user</button>
+        </div>
+      {{/each}}
+    {{else}}
+      <h3>¡No hay usuarios registrados!</h3>
+    {{/if}}
+  </div>
+</div>
+
+<script src="/js/adminPanel.js"></script>

@@ -1,50 +1,39 @@
-const multer = require("multer")
+const multer = require("multer");
 const fs = require("fs");
 
-//const storage = () => {
-
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        
-        const possibleDest = {
-            profile: "profiles",
-            product: "products",
-            documento: "documents",
-            comprobanteDomicilio: "documents",
-            comprobanteCuenta: "documents"
-        }
+  destination: (req, file, cb) => {
+    const possibleDest = {
+      profile: "profiles",
+      product: "products",
+      documento: "documents",
+      comprobanteDomicilio: "documents",
+      comprobanteCuenta: "documents",
+    };
 
-        const {email} = req.user;
-        
-        const destFolder = possibleDest[file.fieldname];
-        
-        const path = `${process.cwd()}/src/files/${destFolder}`
-        
-        if(!fs.existsSync(path)){
-            fs.mkdirSync(path)
-        }
-        
-        if(!fs.existsSync(`${path}/${email}`)){
-            fs.mkdirSync(`${path}/${email}`)
-        }
+    const { email } = req.user;
 
-        cb(null, `${path}/${email}`)
-    },
-    filename: (req, file, cb) => {
-        
-        const type = file.originalname.split(".")[1]
+    const destFolder = possibleDest[file.fieldname];
 
-        cb(null, `${file.fieldname}.${type}`)
+    const path = `${process.cwd()}/src/files/${destFolder}`;
+
+    if (!fs.existsSync(path)) {
+      fs.mkdirSync(path);
     }
-})
-//}
 
-/*const uploader = () => {
-    return multer({storage: storage()})
-}*/
+    if (!fs.existsSync(`${path}/${email}`)) {
+      fs.mkdirSync(`${path}/${email}`);
+    }
 
-const uploader = multer({storage})
+    cb(null, `${path}/${email}`);
+  },
+  filename: (req, file, cb) => {
+    const type = file.originalname.split(".")[1];
 
+    cb(null, `${file.fieldname}.${type}`);
+  },
+});
 
-//console.log(process.cwd())
+const uploader = multer({ storage });
+
 module.exports = uploader;
