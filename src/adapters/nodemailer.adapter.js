@@ -1,5 +1,5 @@
-const { emailUser } = require('../config/email.config')
-const transport = require('../utils/email.util')
+const { emailUser } = require("../config/email.config");
+const transport = require("../utils/email.util");
 
 class NodemailerAdapter {
   async sendNotification(newUserInfo, notifyForNewUser) {
@@ -9,14 +9,14 @@ class NodemailerAdapter {
         to: newUserInfo.email,
         subject: notifyForNewUser.subject,
         html: notifyForNewUser.message,
-      }
+      };
 
-      await transport.sendMail(mailOptions)
-      return 'Email enviado'
+      await transport.sendMail(mailOptions);
+      return "Email enviado";
     } catch (error) {
-      throw error
+      throw error;
     }
   }
 }
 
-module.exports = NodemailerAdapter
+module.exports = NodemailerAdapter;

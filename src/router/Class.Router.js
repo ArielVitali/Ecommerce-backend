@@ -68,19 +68,17 @@ class Route {
 
   handlePolicies = (policies) => {
     return async (req, res, next) => {
-      if (policies[0] === "PUBLIC") {
+      console.log(policies);
+      console.log(req.session.user);
+      if (policies == "PUBLIC") {
+        return next();
+      } else if (policies == "ADMIN") {
+        return next();
+      } else if (!req.session.user) {
+        return res.status(200).redirect("/login");
+      } else if (req.session.user.role == policies) {
         return next();
       }
-  
-      if (!req.session.user) {
-        return res.status(200).redirect("/login")
-      }
-  
-      if (req.session.user.role !== "ADMIN") {
-        return next();
-      }
-  
-      next();
     };
   };
 }
